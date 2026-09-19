@@ -4,7 +4,7 @@
   "description": "Trình soạn thảo và hiển thị Markdown thời gian thực với kiến trúc module",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/**/*.test.js"
+    "test": "node --test tests/*.test.js"
   },
   "keywords": [
     "markdown",
