@@ -1,0 +1,9 @@
+.git
+.github
+node_modules
+tests
+*.md
+.editorconfig
+render.yaml
+compose.yaml
+docker-compose.yml

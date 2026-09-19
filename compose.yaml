@@ -1,0 +1,10 @@
+services:
+  markdown-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: markdown-studio:latest
+    container_name: markdown_studio_app
+    ports:
+      - "8080:80"
+    restart: unless-stopped
