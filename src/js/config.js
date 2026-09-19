@@ -1,52 +1,79 @@
 /**
  * Application Configuration & Default Constants
+ * Includes comprehensive Obsidian Flavored Markdown (OFM) sample document.
  */
 
 export const APP_CONFIG = {
     STORAGE_KEY: 'markdown_studio_content',
     WORDS_PER_MINUTE: 200,
     DEBOUNCE_DELAY_MS: 120,
-    DEFAULT_SAMPLE: `# Chào mừng bạn đến với Markdown Studio 🚀
+    DEFAULT_SAMPLE: `---
+aliases:
+  - Obsidian Studio
+  - OFM Viewer
+tags:
+  - obsidian
+  - pkm/knowledge
+  - dev/tools
+author: mjjyv
+date: 2026-09-19
+status: active
+---
 
-**Markdown Studio** là trình xem và biên tập Markdown trực quan với hỗ trợ Live Preview thời gian thực.
+# 🚀 Obsidian Flavored Markdown (OFM) Studio
+
+Chào mừng bạn đến với trình soạn thảo và xem trước Markdown chuẩn **Obsidian Flavored Markdown**!
 
 ---
 
-## 💡 Tính năng nổi bật
-- [x] Soạn thảo Markdown với bộ tô màu cú pháp (Syntax Highlighting).
-- [x] Hỗ trợ bảng (GFM Table), danh sách việc cần làm (Task List).
-- [x] Đồng bộ vị trí cuộn trang giữa Trình soạn thảo và Xem trước.
-- [x] Tự động lưu nội dung vào **LocalStorage**.
-- [x] Xuất tài liệu ra định dạng **.md** hoặc trang **HTML độc lập**.
+## 💡 Điểm nhấn Cú pháp Obsidian
+
+### 1. Tô sáng văn bản (Highlight) & Gạch ngang
+Bạn có thể dùng ==tô sáng văn bản màu vàng đặc trưng== như trong Obsidian hoặc ~~chữ gạch ngang~~ một cách dễ dàng.
+
+### 2. Thẻ gắn (Tags & Nested Tags)
+Hỗ trợ các thẻ phân cấp dạng cây: #obsidian #kien-thuc/ghi-chu #du-an/2026
+
+### 3. Liên kết nội bộ (Wikilinks & Aliases)
+- Liên kết trực tiếp: [[life_obsidian_Obsidian Flavored Markdown]]
+- Liên kết với tên hiển thị tùy chỉnh: [[life_obsidian_syntax01|Hướng dẫn Callouts & Tags]]
 
 ---
 
-## 💻 Đoạn mã minh họa (Code Highlight)
+## 🎨 Hộp thông tin (Obsidian Callouts)
 
-\`\`\`javascript
-// Hàm tính giai thừa với JavaScript
-function factorial(n) {
-    if (n === 0 || n === 1) return 1;
-    return n * factorial(n - 1);
-}
+> [!note] Ghi chú mặc định (Note)
+> Đây là hộp thông báo cơ bản với icon note màu xanh dương.
 
-console.log('5! =', factorial(5));
-\`\`\`
+> [!tip] Mẹo hay (Tip / Hint / Important)
+> Callouts hỗ trợ đầy đủ các loại bí danh như \`[!hint]\`, \`[!important]\`.
 
----
+> [!warning] Cảnh báo quan trọng (Warning / Caution)
+> Hãy chú ý sao lưu dữ liệu trước khi thực hiện các thay đổi lớn!
 
-## 📊 Bảng so sánh (GFM Table)
+> [!faq]- Hộp thông tin có thể thu gọn được không? (Foldable Callout)
+> **Hoàn toàn được!** Khi thêm dấu trừ \`-\` vào sau tên callout (ví dụ \`[!faq]-\`), hộp sẽ mặc định được đóng lại và bạn có thể click vào thanh tiêu đề để mở rộng ra!
 
-| Tính năng | Markdown Studio | Trình đọc thông thường |
-| :--- | :---: | :---: |
-| Xem trước thời gian thực | ✅ Có | ❌ Không |
-| Tô màu cú pháp Code | ✅ Đầy đủ | ⚠️ Hạn chế |
-| Đồng bộ cuộn | ✅ Mượt mà | ❌ Không |
-| Xuất HTML đóng gói | ✅ 1-Click | ❌ Không |
+> [!success] Hoàn thành xuất sắc
+> Đã xử lý trọn vẹn toàn bộ cú pháp Obsidian Flavored Markdown!
 
 ---
 
-> ❝ Sự đơn giản là đỉnh cao của sự tinh tế. ❞
-> — *Leonardo da Vinci*
+## 📊 Bảng dữ liệu & Danh sách việc (Task List)
+
+- [x] Nhận diện và bóc tách YAML Properties widget
+- [x] Hỗ trợ 13+ loại Callouts và Foldable Callout
+- [x] Hỗ trợ Wikilinks \`[[...]]\` và Highlights \`==...==\`
+- [ ] Chuyển đổi linh hoạt giữa Reading View và Live Preview
+
+| Cú pháp Obsidian | Mô tả | Trạng thái hỗ trợ |
+| :--- | :--- | :---: |
+| \`--- properties ---\` | YAML Frontmatter | ✅ Sẵn sàng |
+| \`> [!type]\` | Obsidian Callouts | ✅ Sẵn sàng |
+| \`==highlight==\` | Tô màu chữ | ✅ Sẵn sàng |
+| \`[[Link]]\` | Wikilinks nội bộ | ✅ Sẵn sàng |
+| \`#tag/subtag\` | Nested Tags | ✅ Sẵn sàng |
+
+%% Ghi chú riêng tư: Đoạn văn bản này nằm trong comment Obsidian nên sẽ bị ẩn hoàn toàn khi render %%
 `
 };

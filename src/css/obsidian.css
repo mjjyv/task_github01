@@ -1,0 +1,213 @@
+/* ==========================================================================
+   Obsidian Flavored Markdown (OFM) Component Styles
+   Properties, Callouts, Highlights, Wikilinks, Tags, Embeds
+   ========================================================================== */
+
+/* 1. Obsidian Properties (YAML Frontmatter) */
+.obsidian-properties {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 13px;
+}
+
+.properties-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+}
+
+.property-row {
+    display: flex;
+    align-items: baseline;
+    padding: 4px 0;
+    gap: 16px;
+}
+
+.property-key {
+    width: 110px;
+    color: #64748b;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.property-value-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex: 1;
+}
+
+.property-pill {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.property-val {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* 2. Highlights (==text==) */
+.obsidian-highlight, mark {
+    background-color: #fef08a;
+    color: #713f12;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+/* 3. Internal Links (Wikilinks [[...]]) */
+.internal-link {
+    color: #0284c7;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: color 0.15s;
+}
+
+.internal-link:hover {
+    color: #0369a1;
+    text-decoration-style: solid;
+    background-color: #f0f9ff;
+    border-radius: 2px;
+}
+
+/* 4. Tags (#tag) */
+a.tag {
+    background-color: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-decoration: none;
+    font-weight: 500;
+    border: 1px solid #e2e8f0;
+    transition: all 0.15s;
+    display: inline-block;
+    margin: 0 2px;
+}
+
+a.tag:hover {
+    background-color: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+}
+
+/* 5. Obsidian Callouts (> [!type]) */
+.callout {
+    --callout-accent: #0284c7;
+    background-color: rgba(2, 132, 199, 0.06);
+    border-left: 4px solid var(--callout-accent);
+    border-radius: 6px;
+    margin: 18px 0;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.callout-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--callout-accent);
+    font-size: 14px;
+    cursor: default;
+    user-select: none;
+}
+
+details.callout summary.callout-title {
+    cursor: pointer;
+    list-style: none;
+}
+
+details.callout summary::-webkit-details-marker {
+    display: none;
+}
+
+.callout-title-inner {
+    flex: 1;
+}
+
+.callout-fold-indicator::after {
+    content: '▼';
+    font-size: 10px;
+    color: var(--callout-accent);
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+
+details.callout:not([open]) .callout-fold-indicator::after {
+    transform: rotate(-90deg);
+}
+
+.callout-content {
+    margin-top: 10px;
+    color: #334155;
+    font-size: 14.5px;
+    line-height: 1.6;
+}
+
+.callout-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Specific Callout Types Styling */
+.callout-tip, .callout-hint, .callout-important, .callout-success, .callout-check, .callout-done {
+    background-color: rgba(16, 185, 129, 0.06);
+}
+
+.callout-warning, .callout-caution, .callout-attention {
+    background-color: rgba(249, 115, 22, 0.06);
+}
+
+.callout-question, .callout-help, .callout-faq {
+    background-color: rgba(234, 179, 8, 0.06);
+}
+
+.callout-failure, .callout-fail, .callout-missing, .callout-danger, .callout-error, .callout-bug {
+    background-color: rgba(239, 68, 68, 0.06);
+}
+
+.callout-example {
+    background-color: rgba(168, 85, 247, 0.06);
+}
+
+/* 6. Embeds */
+.obsidian-embed-image {
+    margin: 16px 0;
+    text-align: center;
+}
+
+.obsidian-embed-image img {
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.obsidian-embed-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #334155;
+    border: 1px dashed #cbd5e1;
+}

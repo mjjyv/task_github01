@@ -1,5 +1,6 @@
 /**
  * Toolbar & Text Formatting Module
+ * Extended with Obsidian Flavored Markdown (Highlight, Callout, Wikilink, Frontmatter)
  */
 
 export function applyFormatting(editor, action) {
@@ -19,6 +20,15 @@ export function applyFormatting(editor, action) {
             break;
         case 'strike':
             replacement = `~~${selectedText || 'gạch ngang'}~~`;
+            break;
+        case 'highlight':
+            replacement = `==${selectedText || 'văn bản tô sáng'}==`;
+            break;
+        case 'wikilink':
+            replacement = `[[${selectedText || 'Tên ghi chú'}]]`;
+            break;
+        case 'callout':
+            replacement = `> [!tip] ${selectedText || 'Mẹo hay'}\n> Nội dung callout tại đây...\n`;
             break;
         case 'h1':
             replacement = `# ${selectedText || 'Tiêu đề 1'}\n`;

@@ -1,7 +1,9 @@
 /**
  * Markdown Parser Module
- * Handles marked.js configuration, code syntax highlighting, and XSS sanitization.
+ * Integrates marked.js, DOMPurify, highlight.js, and Obsidian Flavored Markdown (OFM) pre-processing.
  */
+
+import { preprocessObsidianMarkdown, renderPropertiesWidget } from './obsidian-syntax.js';
 
 export function configureParser() {
     if (typeof marked !== 'undefined') {
@@ -25,19 +27,34 @@ export function configureParser() {
 }
 
 export function parseMarkdown(rawMarkdown) {
-    if (typeof marked === 'undefined') {
-        return rawMarkdown;
-    }
-    
+    if (!rawMarkdown) return '';
+
     try {
-        const rawHtml = marked.parse(rawMarkdown);
+        // Step 1: Preprocess Obsidian Flavored Markdown (Frontmatter, Callouts, Highlights, Wikilinks, Tags)
+        const { frontmatter, processedMarkdown } = preprocessObsidianMarkdown(rawMarkdown);
+
+        // Step 2: Render Properties Widget if YAML Frontmatter is present
+        const propertiesHtml = renderPropertiesWidget(frontmatter);
+
+        // Step 3: Parse standard Markdown with marked.js
+        let rawHtml = '';
+        if (typeof marked !== 'undefined') {
+            rawHtml = marked.parse(processedMarkdown);
+        } else {
+            rawHtml = processedMarkdown;
+        }
+
+        const combinedHtml = propertiesHtml + rawHtml;
+
+        // Step 4: Sanitize HTML while preserving Obsidian elements (<mark>, <details>, <summary>, data-* attributes)
         if (typeof DOMPurify !== 'undefined') {
-            return DOMPurify.sanitize(rawHtml, {
-                ADD_TAGS: ['input'],
-                ADD_ATTR: ['type', 'checked', 'disabled']
+            return DOMPurify.sanitize(combinedHtml, {
+                ADD_TAGS: ['input', 'mark', 'details', 'summary'],
+                ADD_ATTR: ['type', 'checked', 'disabled', 'open', 'data-callout', 'data-tag', 'data-href', 'target']
             });
         }
-        return rawHtml;
+
+        return combinedHtml;
     } catch (error) {
         return `<p style="color: red;">Lỗi hiển thị Markdown: ${error.message}</p>`;
     }

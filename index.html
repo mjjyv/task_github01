@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Live Viewer & Editor</title>
+    <title>Obsidian Flavored Markdown Studio</title>
     <!-- Highlight.js CSS for Syntax Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <link rel="stylesheet" href="style.css">
@@ -13,23 +13,29 @@
         <!-- Header -->
         <header class="navbar">
             <div class="brand">
-                <span class="logo-icon">📝</span>
-                <h1>Markdown Studio</h1>
+                <span class="logo-icon">💎</span>
+                <h1>Obsidian Studio</h1>
             </div>
             <div class="header-actions">
-                <button id="btnSample" class="btn btn-secondary" title="Tải văn bản Markdown mẫu">📄 Mẫu</button>
+                <button id="btnSample" class="btn btn-secondary" title="Tải văn bản Obsidian mẫu">📄 Mẫu OFM</button>
                 <button id="btnCopyHtml" class="btn btn-secondary" title="Sao chép HTML">📋 Copy HTML</button>
                 <button id="btnExportMd" class="btn btn-secondary" title="Tải file Markdown">💾 Xuất .md</button>
                 <button id="btnExportHtml" class="btn btn-primary" title="Tải file HTML">🚀 Xuất HTML</button>
             </div>
         </header>
 
-        <!-- Formatting Toolbar -->
+        <!-- Formatting Toolbar with Obsidian Actions -->
         <nav class="toolbar">
             <div class="toolbar-group">
                 <button type="button" class="tool-btn" data-action="bold" title="In đậm (Ctrl+B)"><b>B</b></button>
                 <button type="button" class="tool-btn" data-action="italic" title="In nghiêng (Ctrl+I)"><i>I</i></button>
                 <button type="button" class="tool-btn" data-action="strike" title="Gạch ngang"><s>S</s></button>
+                <button type="button" class="tool-btn" data-action="highlight" title="Tô sáng Obsidian (==text==)">⭐ ==Tô==</button>
+            </div>
+            <div class="divider"></div>
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" data-action="wikilink" title="Liên kết Obsidian ([[WikiLink]])">🔗 [[Link]]</button>
+                <button type="button" class="tool-btn" data-action="callout" title="Hộp thông tin Obsidian (> [!tip])">💡 Callout</button>
             </div>
             <div class="divider"></div>
             <div class="toolbar-group">
@@ -41,7 +47,7 @@
             <div class="toolbar-group">
                 <button type="button" class="tool-btn" data-action="quote" title="Trích dẫn (Quote)">❝❞</button>
                 <button type="button" class="tool-btn" data-action="code" title="Mã nguồn (Code block)">💻</button>
-                <button type="button" class="tool-btn" data-action="link" title="Chèn liên kết">🔗</button>
+                <button type="button" class="tool-btn" data-action="link" title="Chèn liên kết URL">🌐</button>
                 <button type="button" class="tool-btn" data-action="image" title="Chèn hình ảnh">🖼️</button>
             </div>
             <div class="divider"></div>
@@ -62,18 +68,18 @@
             <!-- Left Pane: Editor -->
             <section class="pane editor-pane">
                 <div class="pane-header">
-                    <span class="pane-title">TRÌNH SOẠN THẢO (MARKDOWN)</span>
+                    <span class="pane-title">SOẠN THẢO (OBSIDIAN FLAVORED MARKDOWN)</span>
                     <span class="pane-tag">Input</span>
                 </div>
                 <div class="editor-wrapper">
-                    <textarea id="markdownInput" spellcheck="false" placeholder="Nhập cú pháp Markdown ở đây..."></textarea>
+                    <textarea id="markdownInput" spellcheck="false" placeholder="Nhập cú pháp Markdown chuẩn Obsidian ở đây..."></textarea>
                 </div>
             </section>
 
             <!-- Right Pane: Live Preview -->
             <section class="pane preview-pane">
                 <div class="pane-header">
-                    <span class="pane-title">XEM TRƯỚC (LIVE PREVIEW)</span>
+                    <span class="pane-title">XEM TRƯỚC (READING VIEW)</span>
                     <span class="pane-tag">Output</span>
                 </div>
                 <div id="previewContent" class="preview-content markdown-body">
