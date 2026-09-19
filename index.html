@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Dự án Đơn Giản</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Task Tracker</h1>
+            <p class="subtitle">Ứng dụng quản lý công việc đơn giản và tiện lợi</p>
+        </header>
+
+        <section class="task-input-section">
+            <input type="text" id="taskInput" placeholder="Nhập tên công việc cần làm..." autofocus>
+            <button id="addTaskBtn">Thêm việc</button>
+        </section>
+
+        <section class="task-filter-section">
+            <button class="filter-btn active" data-filter="all">Tất cả</button>
+            <button class="filter-btn" data-filter="active">Đang làm</button>
+            <button class="filter-btn" data-filter="completed">Đã xong</button>
+        </section>
+
+        <ul id="taskList" class="task-list">
+            <!-- Danh sách công việc sẽ render tại đây -->
+        </ul>
+
+        <footer class="task-footer">
+            <span id="taskCount">0 công việc</span>
+            <button id="clearCompletedBtn">Xóa việc đã xong</button>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
