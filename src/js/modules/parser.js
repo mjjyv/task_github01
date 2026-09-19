@@ -14,19 +14,22 @@ export function configureParser() {
             breaks: true,
             headerIds: true,
             highlight: function(code, lang) {
-                // Don't highlight mermaid here, let mermaid.js handle it
                 if (lang === 'mermaid') {
                     return code;
                 }
+                let highlighted = '';
                 if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
                     try {
-                        return hljs.highlight(code, { language: lang }).value;
+                        highlighted = hljs.highlight(code, { language: lang }).value;
                     } catch (err) {}
+                } else if (typeof hljs !== 'undefined') {
+                    highlighted = hljs.highlightAuto(code).value;
+                } else {
+                    highlighted = code;
                 }
-                if (typeof hljs !== 'undefined') {
-                    return hljs.highlightAuto(code).value;
-                }
-                return code;
+
+                // Highlight closing syntax delimiters (semicolons, braces, brackets, quotes at line ends)
+                return highlighted.replace(/([;{}()\[\],])(?=[\s\n\r]*$)/gm, '<span class="syntax-delimiter">$1</span>');
             }
         });
     }

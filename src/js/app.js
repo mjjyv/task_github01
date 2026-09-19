@@ -1,7 +1,7 @@
 /**
  * Application Entry Point
  * Orchestrates modules, event handlers, Obsidian modes, Split Resizer, Vault Explorer,
- * and asynchronous Mermaid diagram rendering.
+ * asynchronous Mermaid diagram rendering, and interactive code block copying.
  */
 
 import { APP_CONFIG } from './config.js';
@@ -71,10 +71,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Parse and render HTML with full Obsidian styling & KaTeX math
         preview.innerHTML = parseMarkdown(markdown);
+        
+        // Enhance rendered code blocks (Add language header & Copy button)
+        enhanceCodeBlocks();
+
+        // Attach Interactive events (Checkboxes, Wikilinks)
         attachInteractivePreviewEvents();
 
         // Render Mermaid Diagrams if present
         await renderMermaidDiagrams(preview);
+    }
+
+    // Wrap code blocks with Header & Copy Button
+    function enhanceCodeBlocks() {
+        const preElements = preview.querySelectorAll('pre');
+        preElements.forEach((pre) => {
+            // Avoid double wrapping
+            if (pre.parentElement && pre.parentElement.classList.contains('code-block-wrapper')) {
+                return;
+            }
+
+            const codeEl = pre.querySelector('code');
+            if (!codeEl) return;
+
+            // Skip mermaid blocks
+            if (codeEl.classList.contains('language-mermaid')) return;
+
+            let langName = 'CODE';
+            codeEl.classList.forEach((cls) => {
+                if (cls.startsWith('language-')) {
+                    langName = cls.replace('language-', '').toUpperCase();
+                }
+            });
+
+            // Create wrapper
+            const wrapper = document.createElement('div');
+            wrapper.className = 'code-block-wrapper';
+
+            // Create header
+            const header = document.createElement('div');
+            header.className = 'code-block-header';
+            header.innerHTML = `
+                <span class="code-lang-tag">${langName}</span>
+                <button type="button" class="code-copy-btn" title="Sao chép đoạn mã">📋 Copy</button>
+            `;
+
+            const copyBtn = header.querySelector('.code-copy-btn');
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(codeEl.textContent);
+                    copyBtn.textContent = '✅ Đã chép!';
+                    copyBtn.style.color = '#38bdf8';
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy';
+                        copyBtn.style.color = '';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Không thể copy code:', err);
+                }
+            });
+
+            // Insert wrapper before pre, then move pre inside wrapper
+            pre.parentNode.insertBefore(wrapper, pre);
+            wrapper.appendChild(header);
+            wrapper.appendChild(pre);
+        });
     }
 
     // 1. Interactive Preview (Click Checkbox in Preview -> Updates Editor)
