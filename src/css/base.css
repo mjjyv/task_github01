@@ -15,6 +15,22 @@
     --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
 }
 
+/* Light Theme Variables */
+:root.theme-light {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-workspace: #f1f5f9;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent-color: #0284c7;
+    --accent-hover: #0369a1;
+    --pane-bg-editor: #ffffff;
+    --pane-bg-preview: #ffffff;
+    --preview-text: #0f172a;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -27,6 +43,7 @@ body {
     color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
+    transition: background-color 0.2s, color 0.2s;
 }
 
 .app-container {

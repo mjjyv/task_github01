@@ -1,7 +1,7 @@
 /**
  * Application Entry Point
  * Orchestrates modules, event handlers, Obsidian modes, Split Resizer, Vault Explorer,
- * asynchronous Mermaid diagram rendering, and interactive code block copying.
+ * Command Palette, Outline TOC, Theme Manager, KaTeX Math, and Mermaid Diagrams.
  */
 
 import { APP_CONFIG } from './config.js';
@@ -12,6 +12,9 @@ import { applyFormatting } from './modules/toolbar.js';
 import { setupSyncScroll } from './modules/scroller.js';
 import { copyHtmlToClipboard, exportMarkdownFile, exportHtmlFile } from './modules/exporter.js';
 import { renderMermaidDiagrams } from './modules/diagram-processor.js';
+import { initTheme, toggleTheme, getCurrentTheme } from './modules/theme-manager.js';
+import { extractHeadings, renderOutlineUI } from './modules/outline-toc.js';
+import { CommandPalette } from './modules/command-palette.js';
 import { VAULT_DOCS } from './vault-docs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,11 +24,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const workspace = document.getElementById('workspace');
     const editorPane = document.getElementById('editorPane');
     const paneResizer = document.getElementById('paneResizer');
+    
+    // Sidebars
     const vaultSidebar = document.getElementById('vaultSidebar');
     const btnToggleSidebar = document.getElementById('btnToggleSidebar');
     const docFileList = document.getElementById('docFileList');
     const docSearchInput = document.getElementById('docSearchInput');
     const currentDocTitle = document.getElementById('currentDocTitle');
+    
+    const outlinePanel = document.getElementById('outlinePanel');
+    const btnToggleOutline = document.getElementById('btnToggleOutline');
+    const outlineContainer = document.getElementById('outlineContainer');
+
+    // Theme & Command Palette Buttons
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    const btnCommandPalette = document.getElementById('btnCommandPalette');
 
     // Status & Stats Elements
     const statWords = document.getElementById('statWords');
@@ -49,8 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let activeDocName = 'Ghi chú hiện tại';
 
-    // Initialize Markdown Parser
+    // Initialize Markdown Parser & Theme
     configureParser();
+    initTheme();
 
     // Debounce Helper
     function debounce(fn, delay) {
@@ -69,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const stats = calculateStats(markdown);
         updateStatsUI(statElements, stats);
 
+        // Update Outline (TOC)
+        updateOutline(markdown);
+
         // Parse and render HTML with full Obsidian styling & KaTeX math
         preview.innerHTML = parseMarkdown(markdown);
         
@@ -82,11 +99,35 @@ document.addEventListener('DOMContentLoaded', () => {
         await renderMermaidDiagrams(preview);
     }
 
+    // Update Outline TOC Tree
+    function updateOutline(markdown) {
+        const headings = extractHeadings(markdown);
+        renderOutlineUI(outlineContainer, headings, (heading) => {
+            scrollToHeading(heading);
+        });
+    }
+
+    function scrollToHeading(heading) {
+        // Find corresponding heading in preview
+        const previewHeadings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        for (const el of previewHeadings) {
+            if (el.textContent.trim().toLowerCase().includes(heading.text.toLowerCase())) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Also scroll editor to approximate line
+                const totalLines = editor.value.split('\n').length;
+                if (totalLines > 0) {
+                    const scrollRatio = heading.lineNumber / totalLines;
+                    editor.scrollTop = scrollRatio * (editor.scrollHeight - editor.clientHeight);
+                }
+                break;
+            }
+        }
+    }
+
     // Wrap code blocks with Header & Copy Button
     function enhanceCodeBlocks() {
         const preElements = preview.querySelectorAll('pre');
         preElements.forEach((pre) => {
-            // Avoid double wrapping
             if (pre.parentElement && pre.parentElement.classList.contains('code-block-wrapper')) {
                 return;
             }
@@ -94,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const codeEl = pre.querySelector('code');
             if (!codeEl) return;
 
-            // Skip mermaid blocks
             if (codeEl.classList.contains('language-mermaid')) return;
 
             let langName = 'CODE';
@@ -104,11 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Create wrapper
             const wrapper = document.createElement('div');
             wrapper.className = 'code-block-wrapper';
 
-            // Create header
             const header = document.createElement('div');
             header.className = 'code-block-header';
             header.innerHTML = `
@@ -131,14 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // Insert wrapper before pre, then move pre inside wrapper
             pre.parentNode.insertBefore(wrapper, pre);
             wrapper.appendChild(header);
             wrapper.appendChild(pre);
         });
     }
 
-    // 1. Interactive Preview (Click Checkbox in Preview -> Updates Editor)
+    // Interactive Preview (Click Checkbox in Preview -> Updates Editor)
     function attachInteractivePreviewEvents() {
         const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach((cb, index) => {
@@ -202,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup Synchronized Scrolling
     setupSyncScroll(editor, preview);
 
-    // 2. Split Pane Resizer (Drag to Resize)
+    // Split Pane Resizer (Drag to Resize)
     let isResizing = false;
     const RESIZE_STORAGE_KEY = 'obsidian_pane_ratio';
 
@@ -240,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. Obsidian View Modes (Dual, Source, Reading) & Ctrl+E Shortcut
+    // Obsidian View Modes (Dual, Source, Reading) & Ctrl+E Shortcut
     function setViewMode(mode) {
         workspace.classList.remove('mode-source', 'mode-reading');
         viewBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
@@ -264,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 4. Sidebar Vault Explorer (Docs)
+    // Sidebar Vault Explorer (Docs)
     function renderDocList(filter = '') {
         docFileList.innerHTML = '';
         const keys = Object.keys(VAULT_DOCS);
@@ -296,6 +333,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnToggleSidebar.addEventListener('click', () => {
         vaultSidebar.classList.toggle('collapsed');
+    });
+
+    btnToggleOutline.addEventListener('click', () => {
+        outlinePanel.classList.toggle('collapsed');
+    });
+
+    btnThemeToggle.addEventListener('click', () => {
+        const theme = toggleTheme();
+        render();
     });
 
     docSearchInput.addEventListener('input', () => {
@@ -335,6 +381,28 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleReadingView();
         }
     });
+
+    // Command Palette Setup (Ctrl+P)
+    const commandList = [
+        { title: 'Chuyển sang Chế độ Đọc (Reading View)', category: 'Chế độ xem', shortcut: 'Ctrl+E', icon: '📖', action: () => setViewMode('reading') },
+        { title: 'Chuyển sang Chế độ Song Song (Dual-Pane)', category: 'Chế độ xem', icon: '⚖️', action: () => setViewMode('dual') },
+        { title: 'Chuyển sang Chế độ Soạn Thảo (Source Mode)', category: 'Chế độ xem', icon: '✏️', action: () => setViewMode('source') },
+        { title: 'Đổi Giao diện Sáng / Tối (Toggle Theme)', category: 'Giao diện', icon: '🌓', action: () => { toggleTheme(); render(); } },
+        { title: 'Đóng / Mở Thanh bên Vault (Docs)', category: 'Giao diện', icon: '📂', action: () => vaultSidebar.classList.toggle('collapsed') },
+        { title: 'Đóng / Mở Mục lục Tài liệu (Outline TOC)', category: 'Giao diện', icon: '📑', action: () => outlinePanel.classList.toggle('collapsed') },
+        { title: 'Chèn Hộp thông tin (Obsidian Callout)', category: 'Định dạng', icon: '💡', action: () => { applyFormatting(editor, 'callout'); render(); } },
+        { title: 'Chèn Công thức Toán học LaTeX', category: 'Định dạng', icon: '📐', action: () => { applyFormatting(editor, 'math'); render(); } },
+        { title: 'Chèn Sơ đồ Biểu đồ Mermaid', category: 'Định dạng', icon: '📊', action: () => { applyFormatting(editor, 'mermaid'); render(); } },
+        { title: 'Chèn Liên kết Nội bộ (Wikilink)', category: 'Định dạng', icon: '🔗', action: () => { applyFormatting(editor, 'wikilink'); render(); } },
+        { title: 'Chèn Bảng Dữ liệu (Table)', category: 'Định dạng', icon: '▦', action: () => { applyFormatting(editor, 'table'); render(); } },
+        { title: 'Sao chép Toàn bộ HTML ra Clipboard', category: 'Xuất dữ liệu', icon: '📋', action: () => btnCopyHtml.click() },
+        { title: 'Tải về file Markdown (.md)', category: 'Xuất dữ liệu', icon: '💾', action: () => btnExportMd.click() },
+        { title: 'Tải về trang HTML độc lập', category: 'Xuất dữ liệu', icon: '🚀', action: () => btnExportHtml.click() },
+        { title: 'Xóa trắng toàn bộ nội dung', category: 'Chỉnh sửa', icon: '🗑️', action: () => btnClear.click() }
+    ];
+
+    const palette = new CommandPalette({ commands: commandList });
+    btnCommandPalette.addEventListener('click', () => palette.open());
 
     // Clear content
     if (btnClear) {

@@ -28,6 +28,9 @@
             </div>
 
             <div class="header-actions">
+                <button id="btnCommandPalette" class="btn btn-secondary" title="Mở hộp lệnh (Ctrl+P)">⚡ Lệnh (Ctrl+P)</button>
+                <button id="btnThemeToggle" class="btn btn-secondary" title="Đổi giao diện Sáng / Tối">🌓 Giao diện</button>
+                <button id="btnToggleOutline" class="btn btn-secondary" title="Đóng/Mở Mục lục (Outline TOC)">📑 Mục lục</button>
                 <button id="btnCopyHtml" class="btn btn-secondary" title="Sao chép HTML">📋 Copy HTML</button>
                 <button id="btnExportMd" class="btn btn-secondary" title="Tải file Markdown">💾 Xuất .md</button>
                 <button id="btnExportHtml" class="btn btn-primary" title="Tải file HTML">🚀 Xuất HTML</button>
@@ -75,9 +78,9 @@
             </div>
         </nav>
 
-        <!-- Main Body: Sidebar + Workspace -->
+        <!-- Main Body: Left Sidebar + Workspace + Right Outline Panel -->
         <div class="app-body">
-            <!-- Sidebar Vault Explorer -->
+            <!-- Left Sidebar: Vault Explorer -->
             <aside id="vaultSidebar" class="vault-sidebar">
                 <div class="sidebar-header">
                     <span>TÀI LIỆU VAULT (DOCS)</span>
@@ -118,6 +121,17 @@
                     </div>
                 </section>
             </main>
+
+            <!-- Right Sidebar: Outline Panel (TOC) -->
+            <aside id="outlinePanel" class="outline-panel">
+                <div class="outline-header">
+                    <span>MỤC LỤC TÀI LIỆU (OUTLINE)</span>
+                    <span class="pane-tag">TOC</span>
+                </div>
+                <div id="outlineContainer" class="outline-container">
+                    <!-- Dynamic TOC headings will render here -->
+                </div>
+            </aside>
         </div>
 
         <!-- Status Bar -->
