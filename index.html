@@ -3,37 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Manager - Dự án Đơn Giản</title>
+    <title>Markdown Live Viewer & Editor</title>
+    <!-- Highlight.js CSS for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Task Tracker</h1>
-            <p class="subtitle">Ứng dụng quản lý công việc đơn giản và tiện lợi</p>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="navbar">
+            <div class="brand">
+                <span class="logo-icon">📝</span>
+                <h1>Markdown Studio</h1>
+            </div>
+            <div class="header-actions">
+                <button id="btnSample" class="btn btn-secondary" title="Tải văn bản Markdown mẫu">📄 Mẫu</button>
+                <button id="btnCopyHtml" class="btn btn-secondary" title="Sao chép HTML">📋 Copy HTML</button>
+                <button id="btnExportMd" class="btn btn-secondary" title="Tải file Markdown">💾 Xuất .md</button>
+                <button id="btnExportHtml" class="btn btn-primary" title="Tải file HTML">🚀 Xuất HTML</button>
+            </div>
         </header>
 
-        <section class="task-input-section">
-            <input type="text" id="taskInput" placeholder="Nhập tên công việc cần làm..." autofocus>
-            <button id="addTaskBtn">Thêm việc</button>
-        </section>
+        <!-- Formatting Toolbar -->
+        <nav class="toolbar">
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" data-action="bold" title="In đậm (Ctrl+B)"><b>B</b></button>
+                <button type="button" class="tool-btn" data-action="italic" title="In nghiêng (Ctrl+I)"><i>I</i></button>
+                <button type="button" class="tool-btn" data-action="strike" title="Gạch ngang"><s>S</s></button>
+            </div>
+            <div class="divider"></div>
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" data-action="h1" title="Tiêu đề 1">H1</button>
+                <button type="button" class="tool-btn" data-action="h2" title="Tiêu đề 2">H2</button>
+                <button type="button" class="tool-btn" data-action="h3" title="Tiêu đề 3">H3</button>
+            </div>
+            <div class="divider"></div>
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" data-action="quote" title="Trích dẫn (Quote)">❝❞</button>
+                <button type="button" class="tool-btn" data-action="code" title="Mã nguồn (Code block)">💻</button>
+                <button type="button" class="tool-btn" data-action="link" title="Chèn liên kết">🔗</button>
+                <button type="button" class="tool-btn" data-action="image" title="Chèn hình ảnh">🖼️</button>
+            </div>
+            <div class="divider"></div>
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" data-action="ul" title="Danh sách chấm">⦁ Đạn</button>
+                <button type="button" class="tool-btn" data-action="ol" title="Danh sách số">1. Số</button>
+                <button type="button" class="tool-btn" data-action="task" title="Danh sách việc cần làm">☑ Task</button>
+                <button type="button" class="tool-btn" data-action="table" title="Tạo bảng">▦ Bảng</button>
+            </div>
+            <div class="divider"></div>
+            <div class="toolbar-group">
+                <button type="button" class="tool-btn" id="btnClear" title="Xóa trắng nội dung">🗑️ Xóa</button>
+            </div>
+        </nav>
 
-        <section class="task-filter-section">
-            <button class="filter-btn active" data-filter="all">Tất cả</button>
-            <button class="filter-btn" data-filter="active">Đang làm</button>
-            <button class="filter-btn" data-filter="completed">Đã xong</button>
-        </section>
+        <!-- Main Workspace (Dual Pane) -->
+        <main class="workspace">
+            <!-- Left Pane: Editor -->
+            <section class="pane editor-pane">
+                <div class="pane-header">
+                    <span class="pane-title">TRÌNH SOẠN THẢO (MARKDOWN)</span>
+                    <span class="pane-tag">Input</span>
+                </div>
+                <div class="editor-wrapper">
+                    <textarea id="markdownInput" spellcheck="false" placeholder="Nhập cú pháp Markdown ở đây..."></textarea>
+                </div>
+            </section>
 
-        <ul id="taskList" class="task-list">
-            <!-- Danh sách công việc sẽ render tại đây -->
-        </ul>
+            <!-- Right Pane: Live Preview -->
+            <section class="pane preview-pane">
+                <div class="pane-header">
+                    <span class="pane-title">XEM TRƯỚC (LIVE PREVIEW)</span>
+                    <span class="pane-tag">Output</span>
+                </div>
+                <div id="previewContent" class="preview-content markdown-body">
+                    <!-- Parsed HTML will render here -->
+                </div>
+            </section>
+        </main>
 
-        <footer class="task-footer">
-            <span id="taskCount">0 công việc</span>
-            <button id="clearCompletedBtn">Xóa việc đã xong</button>
+        <!-- Status Bar -->
+        <footer class="statusbar">
+            <div class="status-stats">
+                <span id="statWords">0 từ</span>
+                <span class="dot">•</span>
+                <span id="statChars">0 ký tự</span>
+                <span class="dot">•</span>
+                <span id="statReadingTime">0 phút đọc</span>
+            </div>
+            <div class="status-info">
+                <span id="statusSaveState">Đã lưu tự động</span>
+            </div>
         </footer>
     </div>
 
+    <!-- External Libraries: Marked.js for parsing & DOMPurify for security -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
