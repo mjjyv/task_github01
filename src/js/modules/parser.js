@@ -1,9 +1,11 @@
 /**
  * Markdown Parser Module
- * Integrates marked.js, DOMPurify, highlight.js, and Obsidian Flavored Markdown (OFM).
+ * Integrates marked.js, DOMPurify, highlight.js, Obsidian Flavored Markdown (OFM),
+ * and LaTeX KaTeX math processing.
  */
 
 import { preprocessObsidianMarkdown, renderPropertiesWidget } from './obsidian-syntax.js';
+import { extractMathTokens, renderMathTokens } from './math-processor.js';
 
 export function configureParser() {
     if (typeof marked !== 'undefined') {
@@ -12,6 +14,10 @@ export function configureParser() {
             breaks: true,
             headerIds: true,
             highlight: function(code, lang) {
+                // Don't highlight mermaid here, let mermaid.js handle it
+                if (lang === 'mermaid') {
+                    return code;
+                }
                 if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
                     try {
                         return hljs.highlight(code, { language: lang }).value;
@@ -30,6 +36,9 @@ export function parseMarkdown(rawMarkdown) {
     if (!rawMarkdown) return '';
 
     try {
+        // Step 1: Protect Math formulas ($...$ and $$...$$) using KaTeX tokens
+        const { text: textWithMathTokens, mathTokens } = extractMathTokens(rawMarkdown);
+
         const innerParse = (text) => {
             if (typeof marked !== 'undefined') {
                 return marked.parse(text);
@@ -37,13 +46,13 @@ export function parseMarkdown(rawMarkdown) {
             return text;
         };
 
-        // Step 1: Preprocess Obsidian Flavored Markdown (with recursive parser for callouts)
-        const { frontmatter, processedMarkdown } = preprocessObsidianMarkdown(rawMarkdown, innerParse);
+        // Step 2: Preprocess Obsidian Flavored Markdown (Frontmatter, Callouts, Highlights, Wikilinks, Tags)
+        const { frontmatter, processedMarkdown } = preprocessObsidianMarkdown(textWithMathTokens, innerParse);
 
-        // Step 2: Render Properties Widget if YAML Frontmatter is present
+        // Step 3: Render Properties Widget if YAML Frontmatter is present
         const propertiesHtml = renderPropertiesWidget(frontmatter);
 
-        // Step 3: Parse standard Markdown with marked.js
+        // Step 4: Parse standard Markdown with marked.js
         let rawHtml = '';
         if (typeof marked !== 'undefined') {
             rawHtml = marked.parse(processedMarkdown);
@@ -53,15 +62,19 @@ export function parseMarkdown(rawMarkdown) {
 
         const combinedHtml = propertiesHtml + rawHtml;
 
-        // Step 4: Sanitize HTML while preserving Obsidian elements & interactive inputs
+        // Step 5: Sanitize HTML while preserving Obsidian elements, Math tokens & interactive inputs
+        let sanitizedHtml = combinedHtml;
         if (typeof DOMPurify !== 'undefined') {
-            return DOMPurify.sanitize(combinedHtml, {
+            sanitizedHtml = DOMPurify.sanitize(combinedHtml, {
                 ADD_TAGS: ['input', 'mark', 'details', 'summary'],
                 ADD_ATTR: ['type', 'checked', 'disabled', 'open', 'data-callout', 'data-tag', 'data-href', 'data-line', 'target', 'style']
             });
         }
 
-        return combinedHtml;
+        // Step 6: Render KaTeX math expressions into sanitized HTML
+        const finalHtml = renderMathTokens(sanitizedHtml, mathTokens);
+
+        return finalHtml;
     } catch (error) {
         return `<p style="color: red;">Lỗi hiển thị Markdown: ${error.message}</p>`;
     }

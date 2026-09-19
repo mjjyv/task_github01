@@ -31,6 +31,8 @@ jobs:
           node --check src/js/vault-docs.js
           node --check src/js/modules/parser.js
           node --check src/js/modules/obsidian-syntax.js
+          node --check src/js/modules/math-processor.js
+          node --check src/js/modules/diagram-processor.js
           node --check src/js/modules/stats.js
           node --check src/js/modules/storage.js
           node --check src/js/modules/toolbar.js
@@ -39,7 +41,7 @@ jobs:
           node --check src/js/app.js
 
       - name: Execute Automated Unit Tests
-        run: node --test tests/config.test.js tests/parser.test.js tests/stats.test.js tests/obsidian.test.js
+        run: node --test tests/config.test.js tests/parser.test.js tests/stats.test.js tests/obsidian.test.js tests/math.test.js
 
   docker-build:
     name: Validate Docker Build

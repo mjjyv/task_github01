@@ -1,12 +1,13 @@
 /**
  * Application Configuration & Default Constants
- * Includes comprehensive Obsidian Flavored Markdown (OFM) sample document.
+ * Includes comprehensive Obsidian Flavored Markdown (OFM) sample document
+ * with Mermaid diagrams and LaTeX KaTeX math equations.
  */
 
 export const APP_CONFIG = {
     STORAGE_KEY: 'markdown_studio_content',
     WORDS_PER_MINUTE: 200,
-    DEBOUNCE_DELAY_MS: 120,
+    DEBOUNCE_DELAY_MS: 150,
     DEFAULT_SAMPLE: `---
 aliases:
   - Obsidian Studio
@@ -15,6 +16,7 @@ tags:
   - obsidian
   - pkm/knowledge
   - dev/tools
+  - math/latex
 author: mjjyv
 date: 2026-09-19
 status: active
@@ -22,57 +24,72 @@ status: active
 
 # 🚀 Obsidian Flavored Markdown (OFM) Studio
 
-Chào mừng bạn đến với trình soạn thảo và xem trước Markdown chuẩn **Obsidian Flavored Markdown**!
+Chào mừng bạn đến với trình soạn thảo và xem trước Markdown chuẩn **Obsidian Flavored Markdown** hỗ trợ đầy đủ **Sơ đồ Mermaid** & **Toán học LaTeX KaTeX**!
 
 ---
 
-## 💡 Điểm nhấn Cú pháp Obsidian
+## 📐 1. Công thức Toán học LaTeX (KaTeX)
 
-### 1. Tô sáng văn bản (Highlight) & Gạch ngang
-Bạn có thể dùng ==tô sáng văn bản màu vàng đặc trưng== như trong Obsidian hoặc ~~chữ gạch ngang~~ một cách dễ dàng.
+Toán học nội dòng: Phương trình nổi tiếng $e^{2i\pi} = 1$ và hệ thức năng lượng $E = mc^2$.
 
-### 2. Thẻ gắn (Tags & Nested Tags)
-Hỗ trợ các thẻ phân cấp dạng cây: #obsidian #kien-thuc/ghi-chu #du-an/2026
+Khối ma trận và tích phân phức tạp:
 
-### 3. Liên kết nội bộ (Wikilinks & Aliases)
-- Liên kết trực tiếp: [[life_obsidian_Obsidian Flavored Markdown]]
-- Liên kết với tên hiển thị tùy chỉnh: [[life_obsidian_syntax01|Hướng dẫn Callouts & Tags]]
+$$
+\\begin{vmatrix}a & b\\\\
+c & d
+\\end{vmatrix}=ad-bc
+$$
+
+Phương trình tích phân phân phối chuẩn Gauss:
+
+$$
+\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}
+$$
 
 ---
 
-## 🎨 Hộp thông tin (Obsidian Callouts)
+## 📊 2. Sơ đồ Trực quan hóa (Mermaid Diagrams)
 
-> [!note] Ghi chú mặc định (Note)
-> Đây là hộp thông báo cơ bản với icon note màu xanh dương.
+### Biểu đồ Luồng Xử lý (Flowchart)
 
-> [!tip] Mẹo hay (Tip / Hint / Important)
+\`\`\`mermaid
+graph TD
+    A[Bắt đầu] --> B{Kiểm tra Cú pháp}
+    B -->|Hợp lệ| C[Render KaTeX & Mermaid]
+    B -->|Sai sót| D[Hiển thị Hộp cảnh báo]
+    C --> E[Hiển thị Preview hoàn hảo]
+\`\`\`
+
+### Biểu đồ Tuần tự (Sequence Diagram)
+
+\`\`\`mermaid
+sequenceDiagram
+    Alice->>+John: Chào John, bạn khỏe không?
+    Alice->>+John: John, bạn có nghe thấy tôi nói không?
+    John-->>-Alice: Chào Alice, tôi nghe rất rõ!
+    John-->>-Alice: Tôi cảm thấy rất tuyệt vời!
+\`\`\`
+
+---
+
+## 🎨 3. Hộp thông tin (Obsidian Callouts)
+
+> [!tip] Mẹo hay (Foldable Callouts)
 > Callouts hỗ trợ đầy đủ các loại bí danh như \`[!hint]\`, \`[!important]\`.
 
-> [!warning] Cảnh báo quan trọng (Warning / Caution)
-> Hãy chú ý sao lưu dữ liệu trước khi thực hiện các thay đổi lớn!
-
-> [!faq]- Hộp thông tin có thể thu gọn được không? (Foldable Callout)
+> [!faq]- Hộp thông tin có thể thu gọn được không?
 > **Hoàn toàn được!** Khi thêm dấu trừ \`-\` vào sau tên callout (ví dụ \`[!faq]-\`), hộp sẽ mặc định được đóng lại và bạn có thể click vào thanh tiêu đề để mở rộng ra!
 
 > [!success] Hoàn thành xuất sắc
-> Đã xử lý trọn vẹn toàn bộ cú pháp Obsidian Flavored Markdown!
+> Đã xử lý trọn vẹn toàn bộ cú pháp Obsidian: Callouts, Properties, LaTeX Math và Mermaid!
 
 ---
 
-## 📊 Bảng dữ liệu & Danh sách việc (Task List)
+## 💡 4. Điểm nhấn Cú pháp Khác
 
-- [x] Nhận diện và bóc tách YAML Properties widget
-- [x] Hỗ trợ 13+ loại Callouts và Foldable Callout
-- [x] Hỗ trợ Wikilinks \`[[...]]\` và Highlights \`==...==\`
-- [ ] Chuyển đổi linh hoạt giữa Reading View và Live Preview
-
-| Cú pháp Obsidian | Mô tả | Trạng thái hỗ trợ |
-| :--- | :--- | :---: |
-| \`--- properties ---\` | YAML Frontmatter | ✅ Sẵn sàng |
-| \`> [!type]\` | Obsidian Callouts | ✅ Sẵn sàng |
-| \`==highlight==\` | Tô màu chữ | ✅ Sẵn sàng |
-| \`[[Link]]\` | Wikilinks nội bộ | ✅ Sẵn sàng |
-| \`#tag/subtag\` | Nested Tags | ✅ Sẵn sàng |
+- **Tô sáng văn bản**: ==tô sáng văn bản màu vàng đặc trưng== hoặc ~~chữ gạch ngang~~.
+- **Thẻ phân cấp (Tags)**: #obsidian #kien-thuc/ghi-chu #du-an/2026
+- **Liên kết nội bộ (Wikilinks)**: [[life_obsidian_Advanced formatting syntax|Xem tài liệu nâng cao]]
 
 %% Ghi chú riêng tư: Đoạn văn bản này nằm trong comment Obsidian nên sẽ bị ẩn hoàn toàn khi render %%
 `

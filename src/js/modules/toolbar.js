@@ -1,6 +1,6 @@
 /**
  * Toolbar & Text Formatting Module
- * Extended with Obsidian Flavored Markdown (Highlight, Callout, Wikilink, Frontmatter)
+ * Extended with Obsidian Flavored Markdown (Highlight, Callout, Wikilink, Frontmatter, Math, Mermaid)
  */
 
 export function applyFormatting(editor, action) {
@@ -29,6 +29,16 @@ export function applyFormatting(editor, action) {
             break;
         case 'callout':
             replacement = `> [!tip] ${selectedText || 'Mẹo hay'}\n> Nội dung callout tại đây...\n`;
+            break;
+        case 'math':
+            if (selectedText.includes('\n') || !selectedText) {
+                replacement = `$$\n${selectedText || '\\begin{vmatrix}a & b\\\\\nc & d\n\\end{vmatrix}=ad-bc'}\n$$\n`;
+            } else {
+                replacement = `$${selectedText}$`;
+            }
+            break;
+        case 'mermaid':
+            replacement = `\`\`\`mermaid\ngraph TD\n    A[Bắt đầu] --> B{Điều kiện}\n    B -->|Đúng| C[Thành công]\n    B -->|Sai| D[Thử lại]\n\`\`\`\n`;
             break;
         case 'h1':
             replacement = `# ${selectedText || 'Tiêu đề 1'}\n`;

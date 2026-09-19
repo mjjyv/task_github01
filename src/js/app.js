@@ -1,6 +1,7 @@
 /**
  * Application Entry Point
- * Orchestrates modules, event handlers, Obsidian modes, Split Resizer, and Vault Explorer.
+ * Orchestrates modules, event handlers, Obsidian modes, Split Resizer, Vault Explorer,
+ * and asynchronous Mermaid diagram rendering.
  */
 
 import { APP_CONFIG } from './config.js';
@@ -10,6 +11,7 @@ import { saveContent, loadContent, clearContent } from './modules/storage.js';
 import { applyFormatting } from './modules/toolbar.js';
 import { setupSyncScroll } from './modules/scroller.js';
 import { copyHtmlToClipboard, exportMarkdownFile, exportHtmlFile } from './modules/exporter.js';
+import { renderMermaidDiagrams } from './modules/diagram-processor.js';
 import { VAULT_DOCS } from './vault-docs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,23 +62,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Main Render Function
-    function render() {
+    async function render() {
         const markdown = editor.value;
         
         // Update stats
         const stats = calculateStats(markdown);
         updateStatsUI(statElements, stats);
 
-        // Parse and render HTML with full Obsidian styling
+        // Parse and render HTML with full Obsidian styling & KaTeX math
         preview.innerHTML = parseMarkdown(markdown);
         attachInteractivePreviewEvents();
+
+        // Render Mermaid Diagrams if present
+        await renderMermaidDiagrams(preview);
     }
 
     // 1. Interactive Preview (Click Checkbox in Preview -> Updates Editor)
     function attachInteractivePreviewEvents() {
         const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
         checkboxes.forEach((cb, index) => {
-            // Enable clicking checkboxes
             cb.removeAttribute('disabled');
             cb.addEventListener('change', () => {
                 toggleTaskCheckboxInEditor(index, cb.checked);
@@ -90,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const target = link.dataset.href;
                 if (!target) return;
                 
-                // Find matching file in vault
                 const foundKey = Object.keys(VAULT_DOCS).find(k => 
                     k.toLowerCase().includes(target.toLowerCase()) || 
                     target.toLowerCase().includes(k.toLowerCase().replace('.md', ''))
@@ -161,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalWidth = workspaceRect.width;
 
         let percentage = (pointerX / totalWidth) * 100;
-        // Limit between 15% and 85%
         percentage = Math.max(15, Math.min(85, percentage));
 
         editorPane.style.width = `${percentage}%`;
