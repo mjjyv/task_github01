@@ -1,117 +1,175 @@
+/**
+ * Markdown Studio Engine
+ * Handles real-time parsing, syntax highlighting, toolbar actions, and statistics.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
-    const taskInput = document.getElementById('taskInput');
-    const addTaskBtn = document.getElementById('addTaskBtn');
-    const taskList = document.getElementById('taskList');
-    const taskCount = document.getElementById('taskCount');
-    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    const editor = document.getElementById('markdownInput');
+    const preview = document.getElementById('previewContent');
+    const statWords = document.getElementById('statWords');
+    const statChars = document.getElementById('statChars');
+    const statReadingTime = document.getElementById('statReadingTime');
+    const statusSaveState = document.getElementById('statusSaveState');
+    const btnClear = document.getElementById('btnClear');
+    const toolBtns = document.querySelectorAll('.tool-btn[data-action]');
 
-    let tasks = JSON.parse(localStorage.getItem('tasks')) || [
-        { id: 1, text: 'Khám phá dự án mẫu GitHub', completed: true },
-        { id: 2, text: 'Thêm công việc đầu tiên của bạn', completed: false }
-    ];
+    // Configure marked.js
+    marked.setOptions({
+        gfm: true,
+        breaks: true,
+        headerIds: true,
+        highlight: function(code, lang) {
+            if (lang && hljs.getLanguage(lang)) {
+                try {
+                    return hljs.highlight(code, { language: lang }).value;
+                } catch (err) {}
+            }
+            return hljs.highlightAuto(code).value;
+        }
+    });
 
-    let currentFilter = 'all';
-
-    function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
-    function renderTasks() {
-        taskList.innerHTML = '';
-        const filteredTasks = tasks.filter(task => {
-            if (currentFilter === 'active') return !task.completed;
-            if (currentFilter === 'completed') return task.completed;
-            return true;
-        });
-
-        filteredTasks.forEach(task => {
-            const li = document.createElement('li');
-            li.className = `task-item ${task.completed ? 'completed' : ''}`;
-
-            const leftDiv = document.createElement('div');
-            leftDiv.className = 'task-left';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.className = 'task-checkbox';
-            checkbox.checked = task.completed;
-            checkbox.addEventListener('change', () => toggleTask(task.id));
-
-            const span = document.createElement('span');
-            span.className = 'task-text';
-            span.textContent = task.text;
-
-            leftDiv.appendChild(checkbox);
-            leftDiv.appendChild(span);
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'delete-btn';
-            delBtn.innerHTML = '&times;';
-            delBtn.title = 'Xóa';
-            delBtn.addEventListener('click', () => deleteTask(task.id));
-
-            li.appendChild(leftDiv);
-            li.appendChild(delBtn);
-            taskList.appendChild(li);
-        });
-
-        const activeCount = tasks.filter(t => !t.completed).length;
-        taskCount.textContent = `${activeCount} việc còn lại`;
-    }
-
-    function addTask() {
-        const text = taskInput.value.trim();
-        if (text === '') return;
-
-        const newTask = {
-            id: Date.now(),
-            text: text,
-            completed: false
+    // Debounce helper
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
         };
-
-        tasks.unshift(newTask);
-        saveTasks();
-        renderTasks();
-        taskInput.value = '';
-        taskInput.focus();
     }
 
-    function toggleTask(id) {
-        tasks = tasks.map(task => 
-            task.id === id ? { ...task, completed: !task.completed } : task
-        );
-        saveTasks();
-        renderTasks();
+    // Update Statistics (Words, Characters, Reading Time)
+    function updateStats(text) {
+        const charCount = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const readingTime = Math.ceil(words / 200); // 200 WPM
+
+        statWords.textContent = `${words} từ`;
+        statChars.textContent = `${charCount} ký tự`;
+        statReadingTime.textContent = `~${readingTime} phút đọc`;
     }
 
-    function deleteTask(id) {
-        tasks = tasks.filter(task => task.id !== id);
-        saveTasks();
-        renderTasks();
+    // Render Markdown to Preview with Sanitization
+    function renderMarkdown() {
+        const rawMarkdown = editor.value;
+        updateStats(rawMarkdown);
+
+        try {
+            const rawHtml = marked.parse(rawMarkdown);
+            // Sanitize HTML to prevent XSS attacks
+            const cleanHtml = DOMPurify.sanitize(rawHtml, {
+                ADD_TAGS: ['input'],
+                ADD_ATTR: ['type', 'checked', 'disabled']
+            });
+            preview.innerHTML = cleanHtml;
+        } catch (error) {
+            preview.innerHTML = `<p style="color: red;">Lỗi hiển thị Markdown: ${error.message}</p>`;
+        }
     }
 
-    function clearCompleted() {
-        tasks = tasks.filter(task => !task.completed);
-        saveTasks();
-        renderTasks();
+    // Insert formatting from Toolbar
+    function insertFormat(action) {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const text = editor.value;
+        const selectedText = text.substring(start, end);
+
+        let replacement = '';
+        let cursorOffset = 0;
+
+        switch (action) {
+            case 'bold':
+                replacement = `**${selectedText || 'văn bản in đậm'}**`;
+                cursorOffset = selectedText ? replacement.length : 2;
+                break;
+            case 'italic':
+                replacement = `*${selectedText || 'văn bản in nghiêng'}*`;
+                cursorOffset = selectedText ? replacement.length : 1;
+                break;
+            case 'strike':
+                replacement = `~~${selectedText || 'gạch ngang'}~~`;
+                cursorOffset = selectedText ? replacement.length : 2;
+                break;
+            case 'h1':
+                replacement = `# ${selectedText || 'Tiêu đề 1'}\n`;
+                break;
+            case 'h2':
+                replacement = `## ${selectedText || 'Tiêu đề 2'}\n`;
+                break;
+            case 'h3':
+                replacement = `### ${selectedText || 'Tiêu đề 3'}\n`;
+                break;
+            case 'quote':
+                replacement = `> ${selectedText || 'Trích dẫn ở đây...'}\n`;
+                break;
+            case 'code':
+                if (selectedText.includes('\n') || !selectedText) {
+                    replacement = `\`\`\`javascript\n${selectedText || '// Viết mã tại đây'}\n\`\`\`\n`;
+                } else {
+                    replacement = `\`${selectedText}\``;
+                }
+                break;
+            case 'link':
+                replacement = `[${selectedText || 'Tên liên kết'}](https://example.com)`;
+                break;
+            case 'image':
+                replacement = `![${selectedText || 'Mô tả hình ảnh'}](https://picsum.photos/600/300)`;
+                break;
+            case 'ul':
+                replacement = `- ${selectedText || 'Mục danh sách'}\n- Mục tiếp theo\n`;
+                break;
+            case 'ol':
+                replacement = `1. ${selectedText || 'Bước thứ nhất'}\n2. Bước thứ hai\n`;
+                break;
+            case 'task':
+                replacement = `- [ ] ${selectedText || 'Việc cần làm'}\n- [x] Việc đã hoàn thành\n`;
+                break;
+            case 'table':
+                replacement = `| Cột 1 | Cột 2 | Cột 3 |\n| :--- | :---: | ---: |\n| Dữ liệu 1 | Căn giữa | Căn phải |\n| Dữ liệu 2 | Giá trị | 100$ |\n`;
+                break;
+            default:
+                return;
+        }
+
+        editor.setRangeText(replacement, start, end, 'end');
+        editor.focus();
+        renderMarkdown();
     }
 
-    addTaskBtn.addEventListener('click', addTask);
-    taskInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTask();
-    });
-
-    clearCompletedBtn.addEventListener('click', clearCompleted);
-
-    filterBtns.forEach(btn => {
+    // Event Listeners for Toolbar
+    toolBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentFilter = btn.dataset.filter;
-            renderTasks();
+            insertFormat(btn.dataset.action);
         });
     });
 
-    renderTasks();
+    // Clear content
+    if (btnClear) {
+        btnClear.addEventListener('click', () => {
+            if (confirm('Bạn có chắc muốn xóa trắng văn bản?')) {
+                editor.value = '';
+                renderMarkdown();
+            }
+        });
+    }
+
+    // Keyboard shortcuts (Ctrl+B, Ctrl+I)
+    editor.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            e.preventDefault();
+            insertFormat('bold');
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+            e.preventDefault();
+            insertFormat('italic');
+        }
+    });
+
+    // Real-time input handling with debounce
+    const handleInput = debounce(() => {
+        renderMarkdown();
+    }, 100);
+
+    editor.addEventListener('input', handleInput);
+
+    // Initial render
+    renderMarkdown();
 });
