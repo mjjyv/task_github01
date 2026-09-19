@@ -1,6 +1,6 @@
 /**
  * Application Entry Point
- * Orchestrates modules, event handlers, and lifecycle.
+ * Orchestrates modules, event handlers, Obsidian modes, Split Resizer, and Vault Explorer.
  */
 
 import { APP_CONFIG } from './config.js';
@@ -10,22 +10,33 @@ import { saveContent, loadContent, clearContent } from './modules/storage.js';
 import { applyFormatting } from './modules/toolbar.js';
 import { setupSyncScroll } from './modules/scroller.js';
 import { copyHtmlToClipboard, exportMarkdownFile, exportHtmlFile } from './modules/exporter.js';
+import { VAULT_DOCS } from './vault-docs.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const editor = document.getElementById('markdownInput');
     const preview = document.getElementById('previewContent');
+    const workspace = document.getElementById('workspace');
+    const editorPane = document.getElementById('editorPane');
+    const paneResizer = document.getElementById('paneResizer');
+    const vaultSidebar = document.getElementById('vaultSidebar');
+    const btnToggleSidebar = document.getElementById('btnToggleSidebar');
+    const docFileList = document.getElementById('docFileList');
+    const docSearchInput = document.getElementById('docSearchInput');
+    const currentDocTitle = document.getElementById('currentDocTitle');
+
+    // Status & Stats Elements
     const statWords = document.getElementById('statWords');
     const statChars = document.getElementById('statChars');
     const statReadingTime = document.getElementById('statReadingTime');
     const statusSaveState = document.getElementById('statusSaveState');
 
-    // Action Buttons
+    // Action & View Buttons
     const btnClear = document.getElementById('btnClear');
-    const btnSample = document.getElementById('btnSample');
     const btnCopyHtml = document.getElementById('btnCopyHtml');
     const btnExportMd = document.getElementById('btnExportMd');
     const btnExportHtml = document.getElementById('btnExportHtml');
+    const viewBtns = document.querySelectorAll('.view-mode-btn');
     const toolBtns = document.querySelectorAll('.tool-btn[data-action]');
 
     const statElements = {
@@ -33,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         chars: statChars,
         readingTime: statReadingTime
     };
+
+    let activeDocName = 'Ghi chú hiện tại';
 
     // Initialize Markdown Parser
     configureParser();
@@ -54,8 +67,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const stats = calculateStats(markdown);
         updateStatsUI(statElements, stats);
 
-        // Parse and render HTML
+        // Parse and render HTML with full Obsidian styling
         preview.innerHTML = parseMarkdown(markdown);
+        attachInteractivePreviewEvents();
+    }
+
+    // 1. Interactive Preview (Click Checkbox in Preview -> Updates Editor)
+    function attachInteractivePreviewEvents() {
+        const checkboxes = preview.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach((cb, index) => {
+            // Enable clicking checkboxes
+            cb.removeAttribute('disabled');
+            cb.addEventListener('change', () => {
+                toggleTaskCheckboxInEditor(index, cb.checked);
+            });
+        });
+
+        // Click Wikilink inside document -> auto navigate if exists in vault
+        const wikilinks = preview.querySelectorAll('.internal-link');
+        wikilinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const target = link.dataset.href;
+                if (!target) return;
+                
+                // Find matching file in vault
+                const foundKey = Object.keys(VAULT_DOCS).find(k => 
+                    k.toLowerCase().includes(target.toLowerCase()) || 
+                    target.toLowerCase().includes(k.toLowerCase().replace('.md', ''))
+                );
+
+                if (foundKey) {
+                    loadDocIntoEditor(foundKey, VAULT_DOCS[foundKey]);
+                }
+            });
+        });
+    }
+
+    function toggleTaskCheckboxInEditor(checkboxIndex, isChecked) {
+        const lines = editor.value.split('\n');
+        let taskCount = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const taskMatch = lines[i].match(/^(\s*[-*+]\s+\[)([ xX])(\]\s+.*)$/);
+            if (taskMatch) {
+                if (taskCount === checkboxIndex) {
+                    const mark = isChecked ? 'x' : ' ';
+                    lines[i] = `${taskMatch[1]}${mark}${taskMatch[3]}`;
+                    break;
+                }
+                taskCount++;
+            }
+        }
+
+        editor.value = lines.join('\n');
+        saveContent(editor.value);
+        render();
     }
 
     // Auto-save & Render on input
@@ -72,7 +138,108 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup Synchronized Scrolling
     setupSyncScroll(editor, preview);
 
-    // Toolbar actions
+    // 2. Split Pane Resizer (Drag to Resize)
+    let isResizing = false;
+    const RESIZE_STORAGE_KEY = 'obsidian_pane_ratio';
+
+    const savedRatio = localStorage.getItem(RESIZE_STORAGE_KEY);
+    if (savedRatio) {
+        editorPane.style.width = `${savedRatio}%`;
+    }
+
+    paneResizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        paneResizer.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const workspaceRect = workspace.getBoundingClientRect();
+        const pointerX = e.clientX - workspaceRect.left;
+        const totalWidth = workspaceRect.width;
+
+        let percentage = (pointerX / totalWidth) * 100;
+        // Limit between 15% and 85%
+        percentage = Math.max(15, Math.min(85, percentage));
+
+        editorPane.style.width = `${percentage}%`;
+        localStorage.setItem(RESIZE_STORAGE_KEY, percentage.toFixed(2));
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            paneResizer.classList.remove('active');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+
+    // 3. Obsidian View Modes (Dual, Source, Reading) & Ctrl+E Shortcut
+    function setViewMode(mode) {
+        workspace.classList.remove('mode-source', 'mode-reading');
+        viewBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+
+        if (mode === 'source') {
+            workspace.classList.add('mode-source');
+        } else if (mode === 'reading') {
+            workspace.classList.add('mode-reading');
+        }
+    }
+
+    viewBtns.forEach(btn => {
+        btn.addEventListener('click', () => setViewMode(btn.dataset.mode));
+    });
+
+    function toggleReadingView() {
+        if (workspace.classList.contains('mode-reading')) {
+            setViewMode('dual');
+        } else {
+            setViewMode('reading');
+        }
+    }
+
+    // 4. Sidebar Vault Explorer (Docs)
+    function renderDocList(filter = '') {
+        docFileList.innerHTML = '';
+        const keys = Object.keys(VAULT_DOCS);
+        const filteredKeys = keys.filter(k => k.toLowerCase().includes(filter.toLowerCase()));
+
+        filteredKeys.forEach(filename => {
+            const li = document.createElement('li');
+            li.className = `file-item ${filename === activeDocName ? 'active' : ''}`;
+            
+            let displayName = filename.replace('life_obsidian_', '').replace('.md', '');
+            li.innerHTML = `<span class="file-icon">📄</span><span class="file-name" title="${filename}">${displayName}</span>`;
+
+            li.addEventListener('click', () => {
+                loadDocIntoEditor(filename, VAULT_DOCS[filename]);
+            });
+
+            docFileList.appendChild(li);
+        });
+    }
+
+    function loadDocIntoEditor(filename, content) {
+        activeDocName = filename;
+        editor.value = content;
+        currentDocTitle.textContent = filename;
+        saveContent(editor.value);
+        render();
+        renderDocList(docSearchInput.value);
+    }
+
+    btnToggleSidebar.addEventListener('click', () => {
+        vaultSidebar.classList.toggle('collapsed');
+    });
+
+    docSearchInput.addEventListener('input', () => {
+        renderDocList(docSearchInput.value);
+    });
+
+    // Toolbar formatting actions
     toolBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             applyFormatting(editor, btn.dataset.action);
@@ -81,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Keyboard shortcuts (Ctrl+B, Ctrl+I)
+    // Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+E for reading view)
     editor.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
             e.preventDefault();
@@ -93,17 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFormatting(editor, 'italic');
             render();
             saveContent(editor.value);
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+            e.preventDefault();
+            toggleReadingView();
         }
     });
 
-    // Sample Document
-    if (btnSample) {
-        btnSample.addEventListener('click', () => {
-            editor.value = APP_CONFIG.DEFAULT_SAMPLE;
-            render();
-            saveContent(editor.value);
-        });
-    }
+    window.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e' && document.activeElement !== editor) {
+            e.preventDefault();
+            toggleReadingView();
+        }
+    });
 
     // Clear content
     if (btnClear) {
@@ -131,18 +299,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Export .md
     if (btnExportMd) {
         btnExportMd.addEventListener('click', () => {
-            exportMarkdownFile(editor.value);
+            exportMarkdownFile(editor.value, `${activeDocName.replace('.md', '')}.md`);
         });
     }
 
     // Export .html
     if (btnExportHtml) {
         btnExportHtml.addEventListener('click', () => {
-            exportHtmlFile(preview.innerHTML);
+            exportHtmlFile(preview.innerHTML, `${activeDocName.replace('.md', '')}.html`);
         });
     }
 
     // Initial Load
+    renderDocList();
     const saved = loadContent();
     editor.value = saved !== null ? saved : APP_CONFIG.DEFAULT_SAMPLE;
     render();

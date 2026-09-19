@@ -1,6 +1,6 @@
 /**
  * Markdown Parser Module
- * Integrates marked.js, DOMPurify, highlight.js, and Obsidian Flavored Markdown (OFM) pre-processing.
+ * Integrates marked.js, DOMPurify, highlight.js, and Obsidian Flavored Markdown (OFM).
  */
 
 import { preprocessObsidianMarkdown, renderPropertiesWidget } from './obsidian-syntax.js';
@@ -30,8 +30,15 @@ export function parseMarkdown(rawMarkdown) {
     if (!rawMarkdown) return '';
 
     try {
-        // Step 1: Preprocess Obsidian Flavored Markdown (Frontmatter, Callouts, Highlights, Wikilinks, Tags)
-        const { frontmatter, processedMarkdown } = preprocessObsidianMarkdown(rawMarkdown);
+        const innerParse = (text) => {
+            if (typeof marked !== 'undefined') {
+                return marked.parse(text);
+            }
+            return text;
+        };
+
+        // Step 1: Preprocess Obsidian Flavored Markdown (with recursive parser for callouts)
+        const { frontmatter, processedMarkdown } = preprocessObsidianMarkdown(rawMarkdown, innerParse);
 
         // Step 2: Render Properties Widget if YAML Frontmatter is present
         const propertiesHtml = renderPropertiesWidget(frontmatter);
@@ -46,11 +53,11 @@ export function parseMarkdown(rawMarkdown) {
 
         const combinedHtml = propertiesHtml + rawHtml;
 
-        // Step 4: Sanitize HTML while preserving Obsidian elements (<mark>, <details>, <summary>, data-* attributes)
+        // Step 4: Sanitize HTML while preserving Obsidian elements & interactive inputs
         if (typeof DOMPurify !== 'undefined') {
             return DOMPurify.sanitize(combinedHtml, {
                 ADD_TAGS: ['input', 'mark', 'details', 'summary'],
-                ADD_ATTR: ['type', 'checked', 'disabled', 'open', 'data-callout', 'data-tag', 'data-href', 'target']
+                ADD_ATTR: ['type', 'checked', 'disabled', 'open', 'data-callout', 'data-tag', 'data-href', 'data-line', 'target', 'style']
             });
         }
 

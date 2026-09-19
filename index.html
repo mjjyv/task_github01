@@ -13,18 +13,26 @@
         <!-- Header -->
         <header class="navbar">
             <div class="brand">
+                <button id="btnToggleSidebar" class="btn-toggle-sidebar" title="Đóng/Mở thanh bên (Sidebar)">📂</button>
                 <span class="logo-icon">💎</span>
                 <h1>Obsidian Studio</h1>
             </div>
+
+            <!-- View Modes Switcher (Obsidian Modes: Dual, Source, Reading) -->
+            <div class="header-center">
+                <button id="btnViewDual" class="view-mode-btn active" data-mode="dual" title="Chế độ Song Song (Dual-Pane)">⚖️ Song song</button>
+                <button id="btnViewSource" class="view-mode-btn" data-mode="source" title="Tập trung soạn thảo (Source Mode)">✏️ Soạn thảo</button>
+                <button id="btnViewReading" class="view-mode-btn" data-mode="reading" title="Chế độ đọc (Reading View - Ctrl+E)">📖 Đọc (Reading)</button>
+            </div>
+
             <div class="header-actions">
-                <button id="btnSample" class="btn btn-secondary" title="Tải văn bản Obsidian mẫu">📄 Mẫu OFM</button>
                 <button id="btnCopyHtml" class="btn btn-secondary" title="Sao chép HTML">📋 Copy HTML</button>
                 <button id="btnExportMd" class="btn btn-secondary" title="Tải file Markdown">💾 Xuất .md</button>
                 <button id="btnExportHtml" class="btn btn-primary" title="Tải file HTML">🚀 Xuất HTML</button>
             </div>
         </header>
 
-        <!-- Formatting Toolbar with Obsidian Actions -->
+        <!-- Formatting Toolbar -->
         <nav class="toolbar">
             <div class="toolbar-group">
                 <button type="button" class="tool-btn" data-action="bold" title="In đậm (Ctrl+B)"><b>B</b></button>
@@ -63,30 +71,50 @@
             </div>
         </nav>
 
-        <!-- Main Workspace (Dual Pane) -->
-        <main class="workspace">
-            <!-- Left Pane: Editor -->
-            <section class="pane editor-pane">
-                <div class="pane-header">
-                    <span class="pane-title">SOẠN THẢO (OBSIDIAN FLAVORED MARKDOWN)</span>
-                    <span class="pane-tag">Input</span>
+        <!-- Main Body: Sidebar + Workspace -->
+        <div class="app-body">
+            <!-- Sidebar Vault Explorer -->
+            <aside id="vaultSidebar" class="vault-sidebar">
+                <div class="sidebar-header">
+                    <span>TÀI LIỆU VAULT (DOCS)</span>
+                    <span id="docCountBadge" class="pane-tag">6 files</span>
                 </div>
-                <div class="editor-wrapper">
-                    <textarea id="markdownInput" spellcheck="false" placeholder="Nhập cú pháp Markdown chuẩn Obsidian ở đây..."></textarea>
+                <div class="sidebar-search">
+                    <input type="text" id="docSearchInput" placeholder="Tìm kiếm tài liệu..." />
                 </div>
-            </section>
+                <ul id="docFileList" class="file-tree">
+                    <!-- Dynamic File Items from docs/ -->
+                </ul>
+            </aside>
 
-            <!-- Right Pane: Live Preview -->
-            <section class="pane preview-pane">
-                <div class="pane-header">
-                    <span class="pane-title">XEM TRƯỚC (READING VIEW)</span>
-                    <span class="pane-tag">Output</span>
-                </div>
-                <div id="previewContent" class="preview-content markdown-body">
-                    <!-- Parsed HTML will render here -->
-                </div>
-            </section>
-        </main>
+            <!-- Workspace: Dual Pane + Resizer -->
+            <main id="workspace" class="workspace">
+                <!-- Left Pane: Editor -->
+                <section class="pane editor-pane" id="editorPane">
+                    <div class="pane-header">
+                        <span id="currentDocTitle" class="pane-title">SOẠN THẢO (OBSIDIAN FLAVORED MARKDOWN)</span>
+                        <span class="pane-tag">Input</span>
+                    </div>
+                    <div class="editor-wrapper">
+                        <textarea id="markdownInput" spellcheck="false" placeholder="Nhập cú pháp Markdown chuẩn Obsidian ở đây..."></textarea>
+                    </div>
+                </section>
+
+                <!-- Resizer Divider -->
+                <div id="paneResizer" class="pane-resizer" title="Kéo qua lại để chỉnh độ rộng"></div>
+
+                <!-- Right Pane: Live Preview -->
+                <section class="pane preview-pane" id="previewPane">
+                    <div class="pane-header">
+                        <span class="pane-title">XEM TRƯỚC (READING VIEW)</span>
+                        <span class="pane-tag">Output</span>
+                    </div>
+                    <div id="previewContent" class="preview-content markdown-body">
+                        <!-- Parsed HTML will render here -->
+                    </div>
+                </section>
+            </main>
+        </div>
 
         <!-- Status Bar -->
         <footer class="statusbar">

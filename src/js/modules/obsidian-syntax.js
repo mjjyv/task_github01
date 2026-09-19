@@ -51,7 +51,6 @@ export function extractFrontmatter(markdown) {
     const properties = {};
 
     let currentKey = null;
-    let isList = false;
 
     rawYaml.split(/\r?\n/).forEach(line => {
         const trimmed = line.trim();
@@ -77,12 +76,9 @@ export function extractFrontmatter(markdown) {
 
             currentKey = key;
             if (value === '') {
-                // Potential list coming up
                 properties[key] = [];
-                isList = true;
             } else {
                 properties[key] = value.replace(/^["']|["']$/g, '');
-                isList = false;
             }
         }
     });
@@ -146,11 +142,10 @@ export function processHighlights(markdown) {
  * 5. Process Obsidian Wikilinks: [[Target]] and [[Target|Alias]]
  */
 export function processWikilinks(markdown) {
-    // Exclude image embeds which start with ![[
     return markdown.replace(/(?<!\!)\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, target, alias) => {
         const displayText = alias ? alias.trim() : target.trim();
         const targetClean = target.trim();
-        return `<span class="internal-link" data-href="${escapeHtml(targetClean)}" title="Mở liên kết nội bộ: ${escapeHtml(targetClean)}">${escapeHtml(displayText)}</span>`;
+        return `<span class="internal-link" data-href="${escapeHtml(targetClean)}" title="Mở liên kết: ${escapeHtml(targetClean)}">${escapeHtml(displayText)}</span>`;
     });
 }
 
@@ -161,11 +156,9 @@ export function processEmbeds(markdown) {
     return markdown.replace(/\!\[\[([^\]|]+)(?:\|(\d+))?\]\]/g, (match, target, width) => {
         const file = target.trim();
         const widthAttr = width ? ` style="max-width: ${width}px; width: 100%;"` : '';
-        // If image extension
         if (/\.(png|jpe?g|gif|svg|webp)$/i.test(file)) {
             return `<div class="obsidian-embed-image"><img src="${escapeHtml(file)}" alt="${escapeHtml(file)}"${widthAttr} loading="lazy" /></div>`;
         }
-        // Generic file transclusion
         return `<div class="obsidian-embed-file"><span class="embed-icon">📄</span><span class="embed-title">${escapeHtml(file)}</span></div>`;
     });
 }
@@ -174,11 +167,8 @@ export function processEmbeds(markdown) {
  * 7. Process Obsidian Tags: #tag and #nested/tag
  */
 export function processTags(markdown) {
-    // Tag must start with # followed by letters/numbers/underscores/dashes/slashes
-    // and must contain at least one non-numeric character
     return markdown.replace(/(^|\s)#([a-zA-Z0-9_\-\/]+)/g, (match, prefix, tag) => {
         if (/^\d+$/.test(tag)) {
-            // All numbers is not a valid tag in Obsidian
             return match;
         }
         return `${prefix}<a class="tag" href="#tag-${escapeHtml(tag)}" data-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</a>`;
@@ -186,12 +176,10 @@ export function processTags(markdown) {
 }
 
 /**
- * 8. Process Obsidian Callouts:
- * > [!type]+ Custom Title
- * > Content here
+ * 8. Process Obsidian Callouts
+ * Converts > [!type]+ to robust HTML, parsing body markdown so it works seamlessly on Render.
  */
-export function processCallouts(markdown) {
-    // Regex matches blockquote blocks starting with > [!type]
+export function processCallouts(markdown, innerParser = null) {
     const calloutBlockRegex = /(^> \[!([a-zA-Z0-9_\-]+)\]([+\-])?(?:[ \t]+([^\r\n]*))?\r?\n(?:> ?[^\r\n]*\r?\n?)*)/gm;
 
     return markdown.replace(calloutBlockRegex, (block) => {
@@ -202,7 +190,7 @@ export function processCallouts(markdown) {
         if (!match) return block;
 
         const rawType = match[1].toLowerCase();
-        const foldState = match[2]; // '+' or '-' or undefined
+        const foldState = match[2];
         const customTitle = match[3] ? match[3].trim() : '';
 
         const typeInfo = CALLOUT_TYPES[rawType] || {
@@ -213,72 +201,39 @@ export function processCallouts(markdown) {
 
         const displayTitle = customTitle || typeInfo.title;
 
-        // Collect body content
-        const bodyLines = lines.slice(1).map(line => {
-            return line.replace(/^> ?/, '');
-        });
+        // Strip leading '> ' from body lines
+        const bodyLines = lines.slice(1).map(line => line.replace(/^> ?/, ''));
         const rawBody = bodyLines.join('\n').trim();
+
+        // Render inner markdown if a parser function is available
+        let renderedBody = rawBody;
+        if (typeof innerParser === 'function') {
+            renderedBody = innerParser(rawBody);
+        }
 
         const isFoldable = foldState === '+' || foldState === '-';
         const isOpen = foldState === '+' || !foldState;
 
         if (isFoldable) {
-            return `
-<details class="callout callout-${escapeHtml(rawType)}" data-callout="${escapeHtml(rawType)}" ${isOpen ? 'open' : ''} style="--callout-accent: ${typeInfo.color};">
-<summary class="callout-title">
-<span class="callout-icon">${typeInfo.icon}</span>
-<span class="callout-title-inner">${escapeHtml(displayTitle)}</span>
-<span class="callout-fold-indicator"></span>
-</summary>
-<div class="callout-content">
-
-${rawBody}
-
-</div>
-</details>
-`;
+            return `\n<details class="callout callout-${escapeHtml(rawType)}" data-callout="${escapeHtml(rawType)}" ${isOpen ? 'open' : ''} style="--callout-accent: ${typeInfo.color};"><summary class="callout-title"><span class="callout-icon">${typeInfo.icon}</span><span class="callout-title-inner">${escapeHtml(displayTitle)}</span><span class="callout-fold-indicator"></span></summary><div class="callout-content">\n\n${renderedBody}\n\n</div></details>\n`;
         }
 
-        return `
-<div class="callout callout-${escapeHtml(rawType)}" data-callout="${escapeHtml(rawType)}" style="--callout-accent: ${typeInfo.color};">
-<div class="callout-title">
-<span class="callout-icon">${typeInfo.icon}</span>
-<span class="callout-title-inner">${escapeHtml(displayTitle)}</span>
-</div>
-<div class="callout-content">
-
-${rawBody}
-
-</div>
-</div>
-`;
+        return `\n<div class="callout callout-${escapeHtml(rawType)}" data-callout="${escapeHtml(rawType)}" style="--callout-accent: ${typeInfo.color};"><div class="callout-title"><span class="callout-icon">${typeInfo.icon}</span><span class="callout-title-inner">${escapeHtml(displayTitle)}</span></div><div class="callout-content">\n\n${renderedBody}\n\n</div></div>\n`;
     });
 }
 
 /**
  * Master OFM Pre-Processor (Runs BEFORE marked.js)
  */
-export function preprocessObsidianMarkdown(markdown) {
-    // Step 1: Extract YAML Frontmatter
+export function preprocessObsidianMarkdown(markdown, innerParser = null) {
     const { frontmatter, content } = extractFrontmatter(markdown);
 
-    // Step 2: Strip comments
     let processed = processComments(content);
-
-    // Step 3: Handle Highlights ==text==
     processed = processHighlights(processed);
-
-    // Step 4: Handle Embeds ![[...]]
     processed = processEmbeds(processed);
-
-    // Step 5: Handle Wikilinks [[...]]
     processed = processWikilinks(processed);
-
-    // Step 6: Handle Tags #tag
     processed = processTags(processed);
-
-    // Step 7: Handle Callouts > [!type]
-    processed = processCallouts(processed);
+    processed = processCallouts(processed, innerParser);
 
     return {
         frontmatter,
@@ -286,7 +241,7 @@ export function preprocessObsidianMarkdown(markdown) {
     };
 }
 
-function escapeHtml(str) {
+export function escapeHtml(str) {
     if (!str) return '';
     return str
         .replace(/&/g, '&amp;')
